@@ -1,15 +1,16 @@
 #include "MQTT.h"
 
+const char* MQTT::broker = "140.123.106.232";
+const int MQTT::port = 1883;
 
+MQTT::MQTT()
+  : client(espClient) {}
 
-MQTT::MQTT(const char* broker, int port)
-  : broker(broker), port(port), client(espClient) {}
-
-void MQTT::connect() {
+void MQTT::connect(const char* mqtt_name) {
   client.setServer(broker, port);
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
-    if (client.connect("AC_Smart_B_121_2")) {
+    if (client.connect(mqtt_name)) {
       Serial.println("Connected to MQTT broker");
     } else {
       Serial.print("Failed with state ");

@@ -13,12 +13,12 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266httpUpdate.h>
 #include "MQTT.h"
+#include "WiFiHelper.h"
 
-#define _SSID "AILab"        // Your WiFi SSID
-#define _PASSWORD "ailab120"    // Your WiFi Password
+// #define _SSID "AILab"        // Your WiFi SSID
+// #define _PASSWORD "ailab120"    // Your WiFi Password
 #define PROJECT_ID "aircondecode-default-rtdb"   // Your Firebase Project ID. Can be found in project settings.
-const char* broker = "140.123.106.232"; //IP address of broker
-const int port = 1883;
+
 const String Ver = "V1.0";
 //SD Card
 File myFile;
@@ -222,29 +222,30 @@ void loop(void) {
     client.loop();
 }
 
-MQTT mqtt(broker, port);
+MQTT mqtt;
 void connect(){
     onoff_flag = 0;
-    WiFi.mode(WIFI_AP_STA);
-    WiFi.disconnect();
-    delay(1000);
-    // Connect to WiFi
-    Serial.println();
-    Serial.println();
-    Serial.print("Connecting to: ");
-    Serial.println(_SSID);
-    WiFi.begin(_SSID, _PASSWORD);
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print("-");
-    }
-    Serial.println("");
-    Serial.println("WiFi Connected");
-    Serial.print("IP:");
-    Serial.println(WiFi.localIP());
+    connectToWiFi(espClient,client);
+    // WiFi.mode(WIFI_AP_STA);
+    // WiFi.disconnect();
+    // delay(1000);
+    // // Connect to WiFi
+    // Serial.println();
+    // Serial.println();
+    // Serial.print("Connecting to: ");
+    // Serial.println(_SSID);
+    // WiFi.begin(_SSID, _PASSWORD);
+    // while (WiFi.status() != WL_CONNECTED) {
+    //   delay(500);
+    //   Serial.print("-");
+    // }
+    // Serial.println("");
+    // Serial.println("WiFi Connected");
+    // Serial.print("IP:");
+    // Serial.println(WiFi.localIP());
     // MQTT conncted
-    client.setServer(broker, port);
+    //client.setServer(broker, port);
     client.setCallback(callback);
-    mqtt.connect();
+    mqtt.connect("AC_Smart_B_121_2");
     mqtt.subscribe("AI_Smart_AC_121_B");
   }
