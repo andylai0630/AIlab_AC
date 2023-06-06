@@ -40,3 +40,7 @@ void MQTT::publish(const char* topic, const char* message) {
 void MQTT::loop() {
   client.loop();
 }
+
+void MQTT::setcallback() {
+  
+}

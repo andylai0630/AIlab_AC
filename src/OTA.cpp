@@ -1,85 +1,96 @@
 #include "OTA.h"
 
-char url[] = "http://140.123.106.232:8000/ac_sd_V1.0.ino.nodemcu.bin";
+// char url[] = "http://140.123.106.232:8000/ac_sd_V1.0.ino.nodemcu.bin";
+const char *otaurl;
 const char *serverIndex = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 const char *host = "esp8266-webupdate";
 ESP8266WebServer server(80);
 
-void performOTAUpdate() {
+void OTA::performOTAUpdate()
+{
   HTTPClient httpClient;
-  t_httpUpdate_return ret = ESPhttpUpdate.update(httpClient, url);
+  t_httpUpdate_return ret = ESPhttpUpdate.update(httpClient, otaurl);
 
-  switch (ret) {
-    case HTTP_UPDATE_FAILED:
-      Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-      break;
+  switch (ret)
+  {
+  case HTTP_UPDATE_FAILED:
+    Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+    break;
 
-    case HTTP_UPDATE_NO_UPDATES:
-      Serial.println("HTTP_UPDATE_NO_UPDATES");
-      break;
+  case HTTP_UPDATE_NO_UPDATES:
+    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    break;
 
-    case HTTP_UPDATE_OK:
-      Serial.println("HTTP_UPDATE_OK");
-      break;
+  case HTTP_UPDATE_OK:
+    Serial.println("HTTP_UPDATE_OK");
+    break;
   }
 }
 
-void OTAsetup() {
+void OTA::OTAsetup()
+{
   MDNS.begin(host);
-    server.on("/", HTTP_GET, []()
-              {
+  server.on("/", HTTP_GET, []()
+            {
       server.sendHeader("Connection", "close");
       server.send(200, "text/html", serverIndex); });
 
-    server.on(
-        "/update", HTTP_POST, []()
-        {
+  server.on(
+      "/update", HTTP_POST, []()
+      {
       server.sendHeader("Connection", "close");
       server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "OK");
       ESP.restart(); },
-        []()
+      []()
+      {
+        HTTPUpload &upload = server.upload();
+        if (upload.status == UPLOAD_FILE_START)
         {
-          HTTPUpload &upload = server.upload();
-          if (upload.status == UPLOAD_FILE_START)
-          {
-            Serial.setDebugOutput(true);
-            WiFiUDP::stopAll();
-            Serial.printf("Update: %s\n", upload.filename.c_str());
-            uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-            if (!Update.begin(maxSketchSpace))
-            { // start with max available size
-              Update.printError(Serial);
-            }
+          Serial.setDebugOutput(true);
+          WiFiUDP::stopAll();
+          Serial.printf("Update: %s\n", upload.filename.c_str());
+          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          if (!Update.begin(maxSketchSpace))
+          { // start with max available size
+            Update.printError(Serial);
           }
-          else if (upload.status == UPLOAD_FILE_WRITE)
+        }
+        else if (upload.status == UPLOAD_FILE_WRITE)
+        {
+          if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
           {
-            if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
-            {
-              Update.printError(Serial);
-            }
+            Update.printError(Serial);
           }
-          else if (upload.status == UPLOAD_FILE_END)
+        }
+        else if (upload.status == UPLOAD_FILE_END)
+        {
+          if (Update.end(true))
+          { // true to set the size to the current progress
+            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+          }
+          else
           {
-            if (Update.end(true))
-            { // true to set the size to the current progress
-              Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-            }
-            else
-            {
-              Update.printError(Serial);
-            }
-            Serial.setDebugOutput(false);
+            Update.printError(Serial);
           }
-          yield();
-        });
-    server.begin();
-    MDNS.addService("http", "tcp", 80);
+          Serial.setDebugOutput(false);
+        }
+        yield();
+      });
+  server.begin();
+  MDNS.addService("http", "tcp", 80);
 }
 
-void OTAhandleClient() {
+void OTA::OTAhandleClient()
+{
   server.handleClient();
 }
 
-void OTAupdate() {
+void OTA::seturl(const char *url)
+{
+  otaurl = url;
+}
+
+void OTA::OTAupdate()
+{
   MDNS.update();
 }

@@ -22,6 +22,7 @@ public:
   void subscribe(const char* topic);
   void publish(const char* topic, const char* message);
   void loop();
+  void setcallback();
 };
 
 

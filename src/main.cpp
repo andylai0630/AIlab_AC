@@ -73,6 +73,8 @@ void connect();
 //         }
 
 // }
+OTA ota;
+
 
 void send(String tmp)
 {
@@ -151,6 +153,7 @@ void send(String tmp)
   }
   onoff_flag = 1;
 }
+
 void callback(char *topic, byte *payload, unsigned int leg)
 {
   Serial.print("Message arrived on topic: ");
@@ -164,7 +167,7 @@ void callback(char *topic, byte *payload, unsigned int leg)
   if ((char)payload[leg - 1] == '1')
   {
     Serial.println("flash");
-    performOTAUpdate();
+    ota.performOTAUpdate();
   }
 
   String tmp = "";
@@ -176,8 +179,11 @@ void callback(char *topic, byte *payload, unsigned int leg)
   }
   send(tmp);
 }
+
+WiFiHelper wifi;
 void setup()
 {
+  ota.seturl("http://140.123.106.232:8000/ac_sd_V1.0.ino.nodemcu.bin");
   pinMode(LED_BUILTIN, OUTPUT);
   irsend.begin();
   Serial.begin(9600);
@@ -192,14 +198,14 @@ void setup()
   Serial.println("initialization done.");
   Serial.println("Version: " + Ver);
 
-  if (loopWiFi(espClient, client) == false)
+  if (wifi.getWiFistatus(espClient, client) == false)
   {
     connect();
   }
 
   if (WiFi.waitForConnectResult() == WL_CONNECTED)
   {
-    OTAsetup();
+    ota.OTAsetup();
     // MDNS.begin(host);
     // server.on("/", HTTP_GET, []()
     //           {
@@ -255,18 +261,18 @@ MQTT mqtt;
 void loop(void)
 {
 
-  if (loopWiFi(espClient, client) == false) connect();
+  if (wifi.getWiFistatus(espClient, client) == false) connect();
   // server.handleClient();
   // MDNS.update();
-  OTAhandleClient();
-  OTAupdate();
+  ota.OTAhandleClient();
+  ota.OTAupdate();
   mqtt.loop();
 }
 
 void connect()
 {
   onoff_flag = 0;
-  connectToWiFi(espClient, client);
+  wifi.connectToWiFi(espClient, client);
 
   client.setCallback(callback);
   mqtt.connect("AC_Smart_B_121_2");
