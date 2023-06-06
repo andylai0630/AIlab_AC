@@ -10,6 +10,6 @@
 void connectToWiFi(WiFiClient& espClient, PubSubClient& client);
 void callback(char* topic, byte* payload, unsigned int length);
 void setupWiFi(WiFiClient& espClient, PubSubClient& client, const char* ssid, const char* password);
-void loopWiFi(WiFiClient& espClient, PubSubClient& client);
+bool loopWiFi(WiFiClient& espClient, PubSubClient& client);
 
 #endif

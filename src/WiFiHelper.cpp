@@ -37,11 +37,11 @@ void connectToWiFi(WiFiClient& espClient, PubSubClient& client) {
 //   connectToWiFi(espClient, client, ssid, password);
 // }
 
-// void loopWiFi(WiFiClient& espClient, PubSubClient& client) {
-//   // Handle WiFi and MQTT in the loop
-//   if (WiFi.status() != WL_CONNECTED || !client.connected()) {
-//     connectToWiFi(espClient, client, _SSID, _PASSWORD);
-//   }
-
-//   client.loop();
-// }
+bool loopWiFi(WiFiClient& espClient, PubSubClient& client) {
+  // Handle WiFi and MQTT in the loop
+  if (WiFi.status() != WL_CONNECTED || !client.connected()) {
+    return false;
+  }
+  client.loop();
+  return true;
+}
